@@ -61,7 +61,7 @@ def getBlockHeight(x,z,types):
 
 # An individual inside a population
 # role of fighter: seek nearest enemy to kill
-# role of breeder: seek nearest ally to breed 
+# role of reproducer: seek nearest ally to reproduce
 class Individual:
     # id used to identify an individual
     id = 0
@@ -71,15 +71,15 @@ class Individual:
         self.faction = faction
         self.blockType = blktype
 
-        # 'r': random
+        # 'x': random
         # 'f': fight
-        # 'b': breed
-        if type == 'r':
-            self.type = random.choice(['f','b']) 
+        # 'r': reproduce
+        if type == 'x':
+            self.type = random.choice(['f','r']) 
         else:
             self.type = type
         if vita != 0:
-            self.vitality = vita
+            self.vitality = vita 
         else:
             self.vitality = random.randint(30,100)
         self.childrenPossible = 1
@@ -100,7 +100,7 @@ class Individual:
         if self.type == 'f':
             l = 2
             
-        elif self.type == 'b':
+        elif self.type == 'r':
             l = 1
 
         spawnBlockVerticalLine(
@@ -120,7 +120,7 @@ class Individual:
             AIR)
     
     # Update individual position
-    # Determine if the individual lives, breeds or dies
+    # Determine if the individual lives, reproduces or dies
     def update(self,allyPop,enemyPop): 
 
         next = (0,0,0)
@@ -156,8 +156,8 @@ class Individual:
             next = (enemyP[0]-self.position[0],enemyP[1]-self.position[1],enemyP[2]-self.position[2])
             next = reduceVector(next)
 
-        # if it's breeder who can still breed and there is still allies
-        elif self.type == 'b' and self.childrenPossible > 0 and allyPop.nbIndividual > 1: 
+        # if it's reproducer who can still reproducer and there is still allies
+        elif self.type == 'r' and self.childrenPossible > 0 and allyPop.nbIndividual > 1: 
             closestAllyId = 0
             closestAllyDistance = 100000
             
@@ -174,7 +174,7 @@ class Individual:
                         closestAllyId = i
                         closestAllyDistance = d
 
-                    # if ally is within one block range, it tries to breed
+                    # if ally is within one block range, it tries to reproduce
                     elif d<1.5:
                         surrounding = client.readCube(Cube(
                             min=Point(x=self.position[0]-1, y=self.position[1], z=self.position[2]-1),
@@ -190,7 +190,7 @@ class Individual:
                             child = Individual(
                                 self.faction,
                                 self.blockType,
-                                'r',
+                                'x',
                                 p,
                                 random.randint(min(self.vitality,ind.vitality),max(self.vitality,ind.vitality)),
                                 [self.id,ind.id])
@@ -200,7 +200,7 @@ class Individual:
                             self.familyId.append(child.id)
                             self.childrenPossible -=1
 
-                            # once the breeder can't breed anymore, it becomes a fighter
+                            # once the reproducer can't reproduce anymore, it becomes a fighter
                             if self.childrenPossible==0:
                                 self.type = 'f'
                                 self.vitality += 20
@@ -239,7 +239,7 @@ class Population:
         
         self.blockType = bty
         
-        self.indArray = [Individual(f,bty,'r',(0,0,0)) for i in range(bNbI)]
+        self.indArray = [Individual(f,bty,'x',(0,0,0)) for i in range(bNbI)]
         self.randomPopulationPosition()
 
     # Attribute random position to the population within the map
@@ -296,7 +296,7 @@ class Population:
                     nextGen.append(Individual(
                         self.faction,
                         self.blockType,
-                        'r',
+                        'x',
                         (0,0,0),
                         vitality))
 
@@ -312,7 +312,7 @@ class Population:
         
         # if there is less than 2 parent alive, we reset the population with random
         else:
-            self.indArray = [Individual(self.faction,self.blockType,'r',(0,0,0)) for i in range(self.baseNbIndividual)]
+            self.indArray = [Individual(self.faction,self.blockType,'x',(0,0,0)) for i in range(self.baseNbIndividual)]
             self.nbIndividual = self.baseNbIndividual
 
         # set random position for every new individual
